@@ -1,0 +1,7 @@
+{
+    "emmet.showSuggestionsAsSnippets": true,
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "terminal.integrated.sendKeybindingsToShell": true,
+    "terminal.integrated.shellIntegration.decorationsEnabled": "both",
+    "terminal.integrated.allowChords": true
+}

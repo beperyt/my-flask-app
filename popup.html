@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Bot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 10px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .button {
+      margin: 5px 0;
+      padding: 10px;
+      width: 100%;
+      font-size: 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .button:hover {
+      opacity: 0.9;
+    }
+
+    .btn-analyze {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .btn-clear {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .btn-bulk-generate {
+      background-color: #007bff;
+      color: white;
+    }
+
+    #imported-designs {
+      margin-top: 10px;
+    }
+
+    .design-item {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .design-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .thumbnail {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border: 1px solid #ccc;
+      margin-right: 10px;
+    }
+
+    .design-info {
+      flex-grow: 1;
+      font-size: 14px;
+    }
+
+    .status {
+      color: green;
+      font-weight: bold;
+    }
+
+    .action-buttons {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 5px;
+    }
+
+    .delete-design,
+    .create-design,
+    .bulk-generate {
+      background-color: red;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    .create-design {
+      background-color: blue;
+    }
+
+    .delete-design:hover {
+      background-color: darkred;
+    }
+
+    .create-design:hover {
+      background-color: darkblue;
+    }
+
+    .bulk-generate {
+      background-color: #007bff;
+    }
+
+    .bulk-generate:hover {
+      background-color: #0056b3;
+    }
+
+    #notification {
+      display: none;
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #f00;
+      background-color: #fee;
+      color: #900;
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Smart Bot</h1>
+
+  <!-- Lista importowanych projektów -->
+  <div id="imported-designs">
+    <p class="empty-message hidden">No designs imported yet.</p>
+  </div>
+
+  <!-- Przyciski akcji -->
+  <button id="analyze-design" class="button btn-analyze" aria-label="Analyze Designs">Analyze Designs</button>
+  <button id="bulk-generate" class="button btn-bulk-generate" aria-label="CreativeFabrica Bulk Generate">CreativeFabrica Bulk Generate</button>
+  <button id="clear-storage" class="button btn-clear" aria-label="Clear Storage">Clear Storage</button>
+
+  <!-- Powiadomienia -->
+  <div id="notification" role="alert" class="hidden">
+    Please log in to Creative Fabrica to continue.
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
