@@ -41,6 +41,16 @@
       color: white;
     }
 
+    .btn-ideogram {
+      background-color: #6f42c1;
+      color: white;
+    }
+
+    .btn-copy {
+      background-color: #ffc107;
+      color: black;
+    }
+
     #imported-designs {
       margin-top: 10px;
     }
@@ -87,8 +97,8 @@
 
     .delete-design,
     .create-design,
-    .bulk-generate {
-      background-color: red;
+    .create-ideogram,
+    .copy-data {
       color: white;
       border: none;
       border-radius: 3px;
@@ -96,8 +106,21 @@
       cursor: pointer;
     }
 
+    .delete-design {
+      background-color: red;
+    }
+
     .create-design {
       background-color: blue;
+    }
+
+    .create-ideogram {
+      background-color: #6f42c1;
+    }
+
+    .copy-data {
+      background-color: #ffc107;
+      color: black;
     }
 
     .delete-design:hover {
@@ -108,12 +131,12 @@
       background-color: darkblue;
     }
 
-    .bulk-generate {
-      background-color: #007bff;
+    .create-ideogram:hover {
+      background-color: #5a32a8;
     }
 
-    .bulk-generate:hover {
-      background-color: #0056b3;
+    .copy-data:hover {
+      background-color: #e0a800;
     }
 
     #notification {
@@ -138,9 +161,25 @@
   <!-- Lista importowanych projektów -->
   <div id="imported-designs">
     <p class="empty-message hidden">No designs imported yet.</p>
+    <!-- Przykładowy design -->
+    <div class="design-item">
+      <div class="design-content">
+        <img src="thumbnail.png" alt="Design Thumbnail" class="thumbnail">
+        <div class="design-info">
+          <strong>Design Title</strong><br>
+          <em>Brand: Example Brand</em><br>
+          <span class="status">Analyzed</span>
+        </div>
+      </div>
+      <div class="action-buttons">
+        <button class="create-design">Create Design</button>
+        <button class="create-ideogram">Ideogram Create</button>
+        <button class="copy-data">Copy Title & Brand</button>
+      </div>
+    </div>
   </div>
 
-  <!-- Przyciski akcji -->
+  <!-- Przyciski główne -->
   <button id="analyze-design" class="button btn-analyze" aria-label="Analyze Designs">Analyze Designs</button>
   <button id="bulk-generate" class="button btn-bulk-generate" aria-label="CreativeFabrica Bulk Generate">CreativeFabrica Bulk Generate</button>
   <button id="clear-storage" class="button btn-clear" aria-label="Clear Storage">Clear Storage</button>

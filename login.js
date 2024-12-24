@@ -1,37 +1,37 @@
-// Globalne zmienne
+// Flaga przetwarzania
 let isProcessing = false;
-let projectQueue = [];
-let activeTabId = null;
 
-// 1. Funkcja otwierająca lub przełączająca się na Creative Fabrica Studio
+// Funkcja sprawdzająca, czy karta Creative Fabrica jest już otwarta
 async function openOrSwitchToCreativeFabrica() {
     const fabricaStudioUrl = "https://studio.creativefabrica.com/flow/?new=true";
-
-    if (activeTabId) {
-        console.log("Using existing tab:", activeTabId);
-        await browser.tabs.update(activeTabId, { active: true });
-        await waitForPageLoad(activeTabId);
-        return activeTabId;
-    }
-
     const tabs = await browser.tabs.query({ url: "*://studio.creativefabrica.com/*" });
 
-    if (tabs.length > 0) {
+    console.log("Existing tabs with Creative Fabrica:", tabs.map(tab => tab.url));
+
+    // Zamknij wszystkie zakładki Creative Fabrica oprócz jednej poprawnej
+    for (const tab of tabs) {
+        if (tab.url !== fabricaStudioUrl) {
+            console.log("Closing incorrect Creative Fabrica tab:", tab.url);
+            await browser.tabs.remove(tab.id);
+        }
+    }
+
+    const correctTabs = tabs.filter(tab => tab.url === fabricaStudioUrl);
+
+    if (correctTabs.length > 0) {
         console.log("Switching to existing Creative Fabrica Studio tab...");
-        activeTabId = tabs[0].id;
-        await browser.tabs.update(activeTabId, { active: true });
-        await waitForPageLoad(activeTabId);
-        return activeTabId;
+        await browser.tabs.update(correctTabs[0].id, { active: true });
+        await waitForPageLoad(correctTabs[0].id);
+        return correctTabs[0].id;
     } else {
         console.log("Opening new Creative Fabrica Studio tab...");
         const tab = await browser.tabs.create({ url: fabricaStudioUrl });
-        activeTabId = tab.id;
-        await waitForPageLoad(activeTabId);
-        return activeTabId;
+        await waitForPageLoad(tab.id);
+        return tab.id;
     }
 }
 
-// 2. Funkcja czekająca na pełne załadowanie strony
+// Funkcja czekająca na pełne załadowanie strony
 async function waitForPageLoad(tabId) {
     console.log("Waiting for page to fully load...");
     return new Promise((resolve) => {
@@ -43,6 +43,7 @@ async function waitForPageLoad(tabId) {
                     console.log("Page fully loaded.");
                     resolve();
                 } else {
+                    console.log("Still loading...");
                     setTimeout(checkReadyState, 500);
                 }
             });
@@ -51,13 +52,14 @@ async function waitForPageLoad(tabId) {
     });
 }
 
-// 3. Funkcja wypełniająca prompt
+// Funkcja wypełniająca prompt
 async function fillPrompt(tabId, prompt) {
     await browser.tabs.executeScript(tabId, {
         code: `
             (function() {
                 const textarea = document.querySelector('textarea');
                 if (textarea) {
+                    console.log("Filling prompt...");
                     textarea.value = \`${prompt}\`;
                     textarea.dispatchEvent(new Event('input', { bubbles: true }));
                 } else {
@@ -68,37 +70,46 @@ async function fillPrompt(tabId, prompt) {
     });
 }
 
-// 4. Funkcja ustawiająca rozdzielczość
+// Funkcja ustawiająca rozdzielczość
 async function setResolution(tabId, resolution = "Square 1:1") {
     await browser.tabs.executeScript(tabId, {
         code: `
             (async function() {
                 const dropdownButton = document.querySelector('button[data-studiobuttonicon]');
-                if (dropdownButton) {
-                    dropdownButton.click();
+                if (!dropdownButton) {
+                    console.error("Resolution dropdown button not found.");
+                    return;
+                }
+
+                console.log("Opening resolution dropdown...");
+                dropdownButton.click();
+
+                let retries = 20;
+                while (retries > 0) {
                     await new Promise(resolve => setTimeout(resolve, 500));
                     const option = Array.from(document.querySelectorAll('button span'))
                         .find(span => span.textContent.trim() === '${resolution}');
                     if (option) {
+                        console.log("Selecting resolution: ${resolution}");
                         option.click();
-                    } else {
-                        console.error("Resolution option not found.");
+                        return;
                     }
-                } else {
-                    console.error("Resolution dropdown not found.");
+                    retries--;
                 }
+                console.error("Resolution option not found.");
             })();
         `
     });
 }
 
-// 5. Funkcja klikająca przycisk „Generate”
+// Funkcja klikająca przycisk „Generate”
 async function clickGenerate(tabId) {
     await browser.tabs.executeScript(tabId, {
         code: `
             (function() {
                 const generateButton = document.querySelector('button[type="submit"]');
                 if (generateButton) {
+                    console.log("Clicking Generate...");
                     generateButton.click();
                 } else {
                     console.error("Generate button not found.");
@@ -108,85 +119,49 @@ async function clickGenerate(tabId) {
     });
 }
 
-// 6. Funkcja przetwarzająca pojedynczy projekt
+// Funkcja przetwarzająca projekt
 async function processDesign(project) {
     if (isProcessing) {
-        projectQueue.push(project);
+        console.log("Bot is already processing a design. Ignoring:", project.title);
         return;
     }
 
     isProcessing = true;
 
     try {
+        console.log("Processing design:", project.title);
+
         const tabId = await openOrSwitchToCreativeFabrica();
+
+        console.log("Inserting prompt...");
         await fillPrompt(tabId, project.prompt);
+
+        console.log("Setting resolution...");
         await setResolution(tabId, "Square 1:1");
+
+        console.log("Clicking Generate...");
         await clickGenerate(tabId);
-        console.log("Project processed:", project.title);
+
+        console.log("Design processed successfully:", project.title);
     } catch (error) {
         console.error("Error processing design:", error);
     } finally {
         isProcessing = false;
-        if (projectQueue.length > 0) {
-            const nextProject = projectQueue.shift();
-            await processDesign(nextProject);
-        }
     }
 }
 
-// 7. Funkcja obsługująca kolejkę projektów
-async function processQueue() {
-    if (!isProcessing && projectQueue.length > 0) {
-        const project = projectQueue.shift();
-        await processDesign(project);
-    }
-}
-
-// 8. Funkcja obsługująca proces bulk
-async function handleBulkProcess(projects) {
-    projectQueue.push(...projects);
-    await processQueue();
-}
-
-// 9. Funkcja sprawdzająca status logowania
-async function checkLoginStatus(tabId) {
-    const result = await browser.tabs.executeScript(tabId, {
-        code: `
-            (function() {
-                return !!document.querySelector('img[alt="Profile"]') || !document.querySelector('button[data-studiobuttonicon]');
-            })();
-        `
-    });
-    return result[0];
-}
-
-// 10. Funkcja upewniająca się, że użytkownik jest zalogowany
-async function ensureLoggedIn(tabId) {
-    const loggedIn = await checkLoginStatus(tabId);
-
-    if (!loggedIn) {
-        console.log("User not logged in. Attempting to log in...");
-        await browser.tabs.executeScript(tabId, {
-            code: `
-                const loginButton = document.querySelector('button[data-studiobuttonicon]');
-                if (loginButton) {
-                    loginButton.click();
-                } else {
-                    console.error("Login button not found.");
-                }
-            `
-        });
-        alert("Please log in manually, then click OK to continue.");
-        return ensureLoggedIn(tabId);
-    }
-    console.log("User is logged in.");
-}
-
-// 11. Obsługa wiadomości z popup.js
-browser.runtime.onMessage.addListener(async (message) => {
+// Obsługa wiadomości z popup.js
+browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.action === "startLoginProcess") {
+        console.log("Starting design process...");
         await processDesign(message.project);
-    } else if (message.action === "startBulkProcess") {
-        await handleBulkProcess(message.projects);
+    }
+
+    if (message.action === "startBulkProcess") {
+        console.log("Starting bulk process...");
+        for (const project of message.projects) {
+            await processDesign(project);
+        }
+        console.log("Bulk process complete.");
     }
 });
